@@ -22,7 +22,7 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         };
         let ty = match &field.ty {
             Type::Path(v) => v,
-            _ => return mk_err(input_name, "expected a named struct").into(),
+            _ => return span_error(input_name, "expected a named struct").into(),
         };
         let (is_option, ty) = inner_type(ty, "Option");
         values.push((name, ty, attribute, is_option));
@@ -85,7 +85,7 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     proc_macro::TokenStream::from(expanded)
 }
 
-fn mk_err<T: quote::ToTokens>(t: T, message: &str) -> TokenStream {
+fn span_error<T: quote::ToTokens>(t: T, message: &str) -> TokenStream {
     Error::new_spanned(t, message).to_compile_error()
 }
 
@@ -157,7 +157,7 @@ fn get_attribute(attr: &syn::Attribute) -> Result<Ident, TokenStream> {
                 if let Some(path) = value.path.segments.first() {
                     let ident = &path.ident;
                     if (format!("{ident}") != "each") {
-                        return Err(mk_err(list, message));
+                        return Err(span_error(list, message));
                     }
                 }
                 if let syn::Lit::Str(str) = value.lit.to_owned() {
@@ -165,9 +165,9 @@ fn get_attribute(attr: &syn::Attribute) -> Result<Ident, TokenStream> {
                     return Ok(at);
                 }
             }
-            Err(mk_err(list, message))
+            Err(span_error(list, message))
         }
-        _ => Err(mk_err(attr, message)),
+        _ => Err(span_error(attr, message)),
     }
 }
 
